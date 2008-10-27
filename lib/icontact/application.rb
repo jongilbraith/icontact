@@ -1,10 +1,4 @@
-require 'net/http'
-require 'uri'
-require 'hpricot'
 module Icontact
-  
-  class RequestError < StandardError ; end
-  class LoginFail < StandardError ; end
   
   class Application
     
