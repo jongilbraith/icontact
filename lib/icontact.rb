@@ -1,1 +1,1 @@
-# Icontact
+require 'icontact/application'
