@@ -32,6 +32,31 @@ module Icontact
       end
     end
 
+    # Retrieves an array contacts matched against the given criteria
+    def contacts(search_query = nil)
+      # Search query goes at the end as it seems the params need to be in alphabetical order. Makes sense actually, it's just not documented.
+      # Thanks to this guy for working it out http://www.icontact.com/forums/topic-465.html
+      hmac = Digest::MD5.hexdigest("#{self.class.shared_secret}contactsapi_key#{self.class.api_key}api_seq#{self.sequence}api_tok#{self.token}#{search_query.gsub("=", "") unless search_query.nil?}")
+      url = URI.parse(BASE_URI + "contacts?#{(search_query + "&") unless search_query.nil? }api_key=#{self.api_key}&api_seq=#{self.sequence}&api_tok=#{self.token}&api_sig=#{hmac}")
+
+      result = Net::HTTP::get_response(url)
+      puts result.body
+      if result.kind_of?(Net::HTTPSuccess)
+        xml = Hpricot.XML(result.body)
+        xml.at(:response).search(:contact).inject([]) do |contacts, contact_xml|
+          self.instance_variable_set("@contact_#{contact_xml[:id]}", Icontact::Contact.new(self.token, self.sequence, contact_xml[:id]))
+          contacts << self.instance_variable_get("@contact_#{contact_xml[:id]}")
+        end
+      else
+        raise Icontact::RequestError, "HTTP Response: #{result.code} #{result.message}"
+      end
+    end
+    
+    # Look up a contact by it's id
+    def contact(id)
+      self.instance_variable_get("@contact_#{id}").nil? ? self.instance_variable_set("@contact_#{id}", Icontact::Contact.new(self.token, self.sequence, id)) : self.instance_variable_get("@contact_#{id}")
+    end
+
     # Retrieves an array of all lists associated with this account, each element being an instance of List.
     def lists
       hmac = Digest::MD5.hexdigest("#{self.class.shared_secret}listsapi_key#{self.class.api_key}api_seq#{self.sequence}api_tok#{self.token}")
