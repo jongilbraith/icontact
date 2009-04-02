@@ -13,7 +13,7 @@ module Icontact
     
     # Log into the application - returns a logged in application object, with token and sequence number required for further requests.
     def self.login(username, password)
-      hmac = Digest::MD5.hexdigest("#{self.shared_secret}auth/login/#{username}/#{Digest::MD5.hexdigest("cn1000!")}api_key#{self.api_key}")
+      hmac = Digest::MD5.hexdigest("#{self.shared_secret}auth/login/#{username}/#{Digest::MD5.hexdigest(password)}api_key#{self.api_key}")
       url = URI.parse(BASE_URI + "auth/login/#{username}/#{Digest::MD5.hexdigest(password)}/?api_key=#{self.api_key}&api_sig=#{hmac}")
 
       result = Net::HTTP::get_response(url)
