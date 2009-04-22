@@ -7,6 +7,31 @@ and looks to cover most functionality.
 For now I'm just producing a plugin, I'll move it over to a gem when it's more
 complete.
 
+= Updated to Include Limited POST Functionality
+
+The new POST functionality only supports email and zip code at the moment.  This could certainly be improved, but it works.
+
+Put something like this in your site config:
+Icontact::Application.api_key = "xxxxxxxxxxxxxxxxx"
+Icontact::Application.shared_secret = "xxxxxxxxxxxxxxxxx"
+ICONTACT_USER = 'xxxxxxxx'
+ICONTACT_PASSWORD = 'xxxxxxxx'
+ICONTACT_LIST_ID = <ID of the list you want to post to>
+
+Then, in your controller, create a new iContact user and subscribe them to a mailing list:
+api = Icontact::Application.login(ICONTACT_USER, ICONTACT_PASSWORD)
+contact = Icontact::Contact.new(api.token, api.sequence)
+contact.email = params[:user][:email]
+contact.zip = params[:user][:postal_code]
+
+if api.subscribe(api.create_contact(contact), ICONTACT_LIST_ID)
+  flash[:notice] = 'Thank you for joining our mailing list.'
+  redirect_to index_url
+else
+  flash[:notice] = "There was a problem when adding your email address. Please try again."
+  redirect_to :action => 'email_signup'
+end
+
 = Current Status
 It's a while since I worked on this, but I seem to recall I'd implemented a lot
 of the get based stuff, and the rest would just largely be following the same

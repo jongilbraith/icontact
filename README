@@ -1,1 +1,19 @@
-README.rdoc
+iContact
+========
+iContact is an email marketing service provider, and this is a Rails plugin to
+interface with their REST/XML api. The api is in beta and doesn't look to have
+a particularly large amount of development going on, but it is fairly complete
+and looks to cover most functionality.
+
+For now I'm just producing a plugin, I'll move it over to a gem when it's more
+complete.
+
+Links
+=====
+Homepage   - http://www.icontact.com
+API docs   - http://app.icontact.com/icp/pub/api/doc/api.html
+API forum  - http://www.icontact.com/forums/forum-7.html
+API signup - http://www.icontact.com/icp/core/registerapp
+
+Copyright (c) 2008 Jon Gilbraith / CompletelyNovel Ltd.
+Released under the MIT license
