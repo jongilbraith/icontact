@@ -31,6 +31,11 @@ module Icontact
         raise Icontact::RequestError, "HTTP Response: #{result.code} #{result.message}"
       end
     end
+    
+    def initialize
+      @lists    = {}
+      @contacts = {}
+    end
 
     # Retrieves an array contacts matched against the given criteria
     def contacts(search_query = nil)
@@ -44,8 +49,9 @@ module Icontact
       if result.kind_of?(Net::HTTPSuccess)
         xml = Hpricot.XML(result.body)
         xml.at(:response).search(:contact).inject([]) do |contacts, contact_xml|
-          self.instance_variable_set("@contact_#{contact_xml[:id]}", Icontact::Contact.new(self.token, self.sequence, contact_xml[:id]))
-          contacts << self.instance_variable_get("@contact_#{contact_xml[:id]}")
+          id = contact_xml[:id]
+          @contacts[id.to_i] = Icontact::Contact.new(self.token, self.sequence, id)
+          contacts << contact(id)
         end
       else
         raise Icontact::RequestError, "HTTP Response: #{result.code} #{result.message}"
@@ -54,7 +60,7 @@ module Icontact
     
     # Look up a contact by it's id
     def contact(id)
-      self.instance_variable_get("@contact_#{id}").nil? ? self.instance_variable_set("@contact_#{id}", Icontact::Contact.new(self.token, self.sequence, id)) : self.instance_variable_get("@contact_#{id}")
+      @contacts[id.to_i] ||=  Icontact::Contact.new(self.token, self.sequence, id)
     end
     
     # Create a new contact
@@ -93,8 +99,9 @@ module Icontact
       if result.kind_of?(Net::HTTPSuccess)
         xml = Hpricot.XML(result.body)
         xml.at(:lists).search(:list).inject([]) do |lists, list_xml|
-          self.instance_variable_set("@list_#{list_xml[:id]}", Icontact::List.new(self.token, self.sequence, list_xml[:id]))
-          lists << self.instance_variable_get("@list_#{list_xml[:id]}")
+          id = list_xml[:id]
+          @lists[id.to_i] ||= Icontact::List.new(self.token, self.sequence, id)
+          lists << list(id)
         end
       else
         raise Icontact::RequestError, "HTTP Response: #{result.code} #{result.message}"
@@ -103,7 +110,7 @@ module Icontact
     
     # Look up a list by it's id
     def list(id)
-      self.instance_variable_get("@list_#{id}").nil? ? self.instance_variable_set("@list_#{id}", Icontact::List.new(self.token, self.sequence, id)) : self.instance_variable_get("@list_#{id}")
+      @lists[id.to_i] ||= Icontact::List.new(self.token, self.sequence, id)
     end
     
   protected
