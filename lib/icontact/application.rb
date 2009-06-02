@@ -41,7 +41,6 @@ module Icontact
 
       result = Net::HTTP::get_response(url)
       increment_sequence
-      puts result.body
       if result.kind_of?(Net::HTTPSuccess)
         xml = Hpricot.XML(result.body)
         xml.at(:response).search(:contact).inject([]) do |contacts, contact_xml|
@@ -77,19 +76,11 @@ module Icontact
     
     # Subscribe a contact to a list
     def subscribe(contact_id, list_id)
-      xml = Builder::XmlMarkup.new
-      xml.instruct!
-      xml.subscription( :id => list_id ) do
-        xml.status( 'subscribed' )
-      end
-      
-      hmac = Digest::MD5.hexdigest("#{self.class.shared_secret}contact/#{contact_id}/subscription/#{list_id}api_key#{self.class.api_key}api_put#{xml.target!}api_seq#{self.sequence}api_tok#{self.token}")
-      url = URI.parse(BASE_URI + "contact/#{contact_id}/subscription/#{list_id}?api_key=#{self.api_key}&api_seq=#{self.sequence}&api_tok=#{self.token}&api_sig=#{hmac}")
-      
-      # raise xml.target!.to_s + url.inspect
-      result = Net::HTTP.start(url.host, url.port) {|http| http.send_request('PUT', url.request_uri, xml.target!) }
-      increment_sequence
-      return result.kind_of?(Net::HTTPSuccess)
+      change_subscription(contact_id, list_id, 'subscribed')
+    end
+
+    def unsubscribe(contact_id, list_id)
+      change_subscription(contact_id, list_id, 'unsubscribed')
     end
 
     # Retrieves an array of all lists associated with this account, each element being an instance of List.
@@ -121,6 +112,21 @@ module Icontact
     # This is one convoluted and poorly documented API.
     def increment_sequence
       self.sequence += 1
+    end
+
+    def change_subscription(contact_id, list_id, status)
+      xml = Builder::XmlMarkup.new
+      xml.instruct!
+      xml.subscription( :id => list_id ) do
+        xml.status( status )
+      end
+
+      hmac = Digest::MD5.hexdigest("#{self.class.shared_secret}contact/#{contact_id}/subscription/#{list_id}api_key#{self.class.api_key}api_put#{xml.target!}api_seq#{self.sequence}api_tok#{self.token}")
+      url = URI.parse(BASE_URI + "contact/#{contact_id}/subscription/#{list_id}?api_key=#{self.api_key}&api_seq=#{self.sequence}&api_tok=#{self.token}&api_sig=#{hmac}")
+
+      result = Net::HTTP.start(url.host, url.port) {|http| http.send_request('PUT', url.request_uri, xml.target!) }
+      increment_sequence
+      return result.kind_of?(Net::HTTPSuccess)
     end
   end
   
